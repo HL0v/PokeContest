@@ -1,1 +1,34 @@
-backend
+# === IDE ===
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Java / Spring Boot (backend) ===
+backend/build/
+backend/.gradle/
+backend/bin/
+backend/out/
+*.class
+*.jar
+*.war
+*.log
+
+# === SQLite ===
+*.db
+*.sqlite
+*.sqlite3
+
+# === Node / React (frontend) ===
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# === General ===
+*.env
