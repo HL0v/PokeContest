@@ -162,9 +162,8 @@ export const apiService = {
   // --- ANALYST ---
   getAnalystDashboard: async () => {
     // Fetch analyst stats + pending submissions
-    const [statsRes, subsRes, contestsRes] = await Promise.all([
+    const [statsRes, contestsRes] = await Promise.all([
       authFetch('/api/analyst/stats'),
-      authFetch('/api/submissions?status=PENDING'),  // We may need to fetch all and filter
       authFetch('/api/contests')
     ]);
     
