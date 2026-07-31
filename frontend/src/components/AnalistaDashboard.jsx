@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  PenTool, Plus, Filter, MessageCircle, Megaphone, ArrowRight
+  PenTool, Filter, MessageCircle, Megaphone, ArrowRight
 } from 'lucide-react';
 import { apiService } from '../services/api';
 import Sidebar from './common/Sidebar';
@@ -39,7 +39,7 @@ export default function AnalistaDashboard() {
           <div className="page-header">
             <div className="page-title-group">
               <h1>Painel de Curadoria</h1>
-              <p>Gerencie as requisições de novos concursos e valide as submissões dos artistas ativos na plataforma Nexus.</p>
+              <p>Gerencie as requisições de novos concursos e valide as submissões dos artistas ativos na plataforma PokeContest.</p>
             </div>
 
             <div className="header-actions">
@@ -86,8 +86,8 @@ export default function AnalistaDashboard() {
                 <div className="request-badge critical">CRÍTICO</div>
                 <div className="request-title">Campanha Lançamento "Ethereal"</div>
                 <div className="request-desc">Necessita 3 variações de arte para o evento de fim de semana. Temática mística e cores neon.</div>
-                <button className="btn-new-request" style={{marginTop: '1rem', padding: '0.5rem'}}>PUBLICAR AGORA</button>
-                <div className="request-meta">Enviado por: Boss_Nexus • 2h atrás</div>
+                <button className="btn-secondary" style={{width: '100%', marginTop: '1rem', padding: '0.5rem'}} onClick={() => navigate('/contest/analista')}>REVISAR</button>
+                <div className="request-meta">Enviado por: Boss_PokeContest • 2h atrás</div>
               </div>
 
               <div className="request-card">
@@ -95,7 +95,7 @@ export default function AnalistaDashboard() {
                 <div className="request-title">Redesign de Ativos Tier 3</div>
                 <div className="request-desc">Atualização visual para os crachás de participação nível ouro e platina.</div>
                 <button className="btn-secondary" style={{width: '100%', marginTop: '1rem', padding: '0.5rem'}} onClick={() => navigate('/contest/analista')}>REVISAR</button>
-                <div className="request-meta">Enviado por: Boss_Nexus • Ontem</div>
+                <div className="request-meta">Enviado por: Boss_PokeContest • Ontem</div>
               </div>
 
               <a href="#" style={{display: 'block', textAlign: 'center', marginTop: '1rem', fontSize: '0.85rem'}}>Ver histórico de requisições</a>
@@ -177,7 +177,7 @@ export default function AnalistaDashboard() {
 
               <div className="request-card" style={{margin: 0}}>
                 <div className="request-badge" style={{background: 'rgba(239, 68, 68, 0.1)', color: 'var(--status-red)'}}>BOSS PRIORITY</div>
-                <div style={{fontWeight: 600, marginBottom: '0.5rem'}}>Rebranding Nexus</div>
+                <div style={{fontWeight: 600, marginBottom: '0.5rem'}}>Rebranding PokeContest</div>
                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem'}}>
                   <span>Progresso Total</span>
                   <span style={{fontWeight: 700}}>20%</span>
@@ -207,4 +207,3 @@ export default function AnalistaDashboard() {
     </div>
   );
 }
-

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Search, ListTodo, Rocket, MoreHorizontal, Filter
+  Search, ListTodo, Rocket, Filter
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { apiService } from '../services/api';
 import Sidebar from './common/Sidebar';
 import TopNavbar from './common/TopNavbar';
@@ -72,14 +71,13 @@ export default function BossDashboard() {
                   <th>Descrição Detalhada</th>
                   <th>Status</th>
                   <th>Progresso</th>
-                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" style={{textAlign: 'center'}}>Carregando requisições...</td></tr>
+                  <tr><td colSpan="5" style={{textAlign: 'center'}}>Carregando requisições...</td></tr>
                 ) : data.activeRequests.length === 0 ? (
-                  <tr><td colSpan="6" style={{textAlign: 'center'}}>Nenhuma requisição ativa.</td></tr>
+                  <tr><td colSpan="5" style={{textAlign: 'center'}}>Nenhuma requisição ativa.</td></tr>
                 ) : (
                   data.activeRequests.map((req) => (
                     <tr key={req.id}>
@@ -100,7 +98,6 @@ export default function BossDashboard() {
                           <div className="progress-bar" style={{width: `${req.progress}%`, background: `var(--status-${req.color})`}}></div>
                         </div>
                       </td>
-                      <td><button className="icon-btn" onClick={() => toast.info('Mais ações em breve!')}><MoreHorizontal size={18} /></button></td>
                     </tr>
                   ))
                 )}

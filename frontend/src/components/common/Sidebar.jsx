@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ListTodo, PenTool, Users, Image as ImageIcon,
+  LayoutDashboard, PenTool, Users,
   Plus, RefreshCw, Power, Star, BarChart2, Palette
 } from 'lucide-react';
 import { apiService } from '../../services/api';
@@ -30,7 +30,7 @@ export default function Sidebar({ role, activeItem }) {
     navigate('/');
   };
 
-  const title = "Contest HQ";
+  const title = "PokeContest HQ";
   const subtitle = role === 'artista' ? "Estúdio de Arte" : "Advanced Exploration";
   const roleName = role === 'boss' ? 'Boss' : role === 'analista' ? 'Analista' : 'Artista';
 
@@ -47,7 +47,7 @@ export default function Sidebar({ role, activeItem }) {
       </div>
 
       <nav className="sidebar-nav">
-        {role === 'artista' ? (
+        {role === 'artista' && (
           <>
             <a href="#" className={`nav-item ${activeItem === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/artista'); }}>
               <LayoutDashboard size={20} /> Dashboard
@@ -55,23 +55,30 @@ export default function Sidebar({ role, activeItem }) {
             <a href="#" className={`nav-item ${activeItem === 'criar_submissao' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/contest/artista'); }}>
               <PenTool size={20} /> Criar Submissão
             </a>
-            <a href="#" className={`nav-item ${activeItem === 'portfolio' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); import('react-hot-toast').then(m => m.default.info('Em breve!')); }}>
-              <ImageIcon size={20} /> Meu Portfólio
-            </a>
           </>
-        ) : (
+        )}
+
+        {role === 'boss' && (
           <>
-            <a href="#" className={`nav-item ${activeItem === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate(role === 'boss' ? '/boss' : '/analista'); }}>
+            <a href="#" className={`nav-item ${activeItem === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/boss'); }}>
               <LayoutDashboard size={20} /> Dashboard
             </a>
-            <a href="#" className={`nav-item ${activeItem === 'requests' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); import('react-hot-toast').then(m => m.default.info('Em breve!')); }}>
-              <ListTodo size={20} /> Requests
+            <a href="#" className={`nav-item ${activeItem === 'concurso' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/contest/boss'); }}>
+              <PenTool size={20} /> Novo Concurso
             </a>
-            <a href="#" className={`nav-item ${activeItem === 'concurso' || activeItem === 'submissions' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate(`/contest/${role}`); }}>
-              <PenTool size={20} /> {role === 'boss' ? 'Novo Concurso' : 'Submissões'}
-            </a>
-            <a href="#" className={`nav-item ${activeItem === 'management' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); role === 'boss' ? navigate('/boss/management') : import('react-hot-toast').then(m => m.default.info('Em breve!')); }}>
+            <a href="#" className={`nav-item ${activeItem === 'management' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/boss/management'); }}>
               <Users size={20} /> Management
+            </a>
+          </>
+        )}
+
+        {role === 'analista' && (
+          <>
+            <a href="#" className={`nav-item ${activeItem === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/analista'); }}>
+              <LayoutDashboard size={20} /> Dashboard
+            </a>
+            <a href="#" className={`nav-item ${activeItem === 'submissions' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/contest/analista'); }}>
+              <PenTool size={20} /> Submissões
             </a>
           </>
         )}

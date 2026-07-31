@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Search, Bell } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Search } from 'lucide-react';
 import NotificationDropdown from '../NotificationDropdown';
 
 export default function TopNavbar({ role, showSearch = false, showLinks = false, activeLink = '' }) {
   const navigate = useNavigate();
+  
   const getBadgeStyle = () => {
     if (role === 'boss') return { background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' };
     if (role === 'analista') return { background: 'rgba(139, 92, 246, 0.1)', color: 'var(--status-purple)' };
@@ -23,11 +23,16 @@ export default function TopNavbar({ role, showSearch = false, showLinks = false,
   return (
     <header className="top-navbar">
       <div className="navbar-left">
-        <div className="navbar-logo-text">Contest Nexus</div>
+        <div className="navbar-logo-text">PokeContest</div>
         {showLinks ? (
           <div className="navbar-links">
-            <a href="#" className={`nav-link ${activeLink === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/boss'); }}>Dashboard</a>
-            <a href="#" className={`nav-link ${activeLink === 'requests' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); toast.info('Em breve!'); }}>Requests</a>
+            <a 
+              href="#" 
+              className={`nav-link ${activeLink === 'dashboard' ? 'active' : ''}`} 
+              onClick={(e) => { e.preventDefault(); navigate('/boss'); }}
+            >
+              Dashboard
+            </a>
           </div>
         ) : (
           <div className="navbar-badge" style={getBadgeStyle()}>
@@ -44,11 +49,7 @@ export default function TopNavbar({ role, showSearch = false, showLinks = false,
       )}
 
       <div className="navbar-right">
-        {/* We assume NotificationDropdown is available, though ContestPage used a hardcoded Bell for some reason. We'll use NotificationDropdown consistently if possible, or fallback. */}
         <NotificationDropdown />
-        <button className="icon-btn" onClick={() => toast.info('Configurações em breve!')}>
-          <Settings size={20} />
-        </button>
         <img src={`https://i.pravatar.cc/150?u=a042581f4e29026704${getProfileId()}`} alt="User" className="user-profile" />
       </div>
     </header>
