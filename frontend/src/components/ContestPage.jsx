@@ -630,8 +630,8 @@ function AnalistaContestView({ navigate }) {
             onChange={(e) => { setSelectedContest(parseInt(e.target.value) || null); setSelectedSubmission(null); setActionMode(null); }}
           >
             <option value="">-- Selecionar Concurso --</option>
-            {activeContests.map(c => (
-              <option key={c.id} value={c.id}>{c.title} ({c.submissions} submissões)</option>
+            {contests.map(c => (
+              <option key={c.id} value={c.id}>{c.title}</option>
             ))}
           </select>
         </div>

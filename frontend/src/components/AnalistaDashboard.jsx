@@ -46,9 +46,6 @@ export default function AnalistaDashboard() {
               <button className="btn-secondary">
                 <Filter size={18} /> Filtrar
               </button>
-              <button className="btn-new-request" onClick={() => navigate('/contest/analista')}>
-                <Plus size={18} /> Novo Concurso
-              </button>
             </div>
           </div>
 
