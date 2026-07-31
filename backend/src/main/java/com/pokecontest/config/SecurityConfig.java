@@ -1,5 +1,7 @@
-package com.pokecontest.security;
+package com.pokecontest.config;
 
+import com.pokecontest.security.JwtAuthFilter;
+import com.pokecontest.security.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
