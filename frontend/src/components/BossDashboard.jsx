@@ -38,7 +38,7 @@ export default function BossDashboard() {
         </nav>
 
         <div className="sidebar-bottom">
-          <button className="btn-new-request">
+          <button className="btn-new-request" onClick={() => navigate('/contest/boss')}>
             <Plus size={18} /> Novo Pedido
           </button>
           

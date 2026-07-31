@@ -12,6 +12,8 @@ export default function Login() {
       navigate('/boss');
     } else if (role === 'ANALISTA') {
       navigate('/analista');
+    } else if (role === 'ARTISTA') {
+      navigate('/contest/artista');
     }
   };
 

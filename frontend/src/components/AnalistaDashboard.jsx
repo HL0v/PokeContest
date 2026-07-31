@@ -87,7 +87,7 @@ export default function AnalistaDashboard() {
               <button className="btn-secondary">
                 <Filter size={18} /> Filtrar
               </button>
-              <button className="btn-new-request">
+              <button className="btn-new-request" onClick={() => navigate('/contest/analista')}>
                 <Plus size={18} /> Novo Concurso
               </button>
             </div>
@@ -138,7 +138,7 @@ export default function AnalistaDashboard() {
                 <div className="request-badge routine">ROTINA</div>
                 <div className="request-title">Redesign de Ativos Tier 3</div>
                 <div className="request-desc">Atualização visual para os crachás de participação nível ouro e platina.</div>
-                <button className="btn-secondary" style={{width: '100%', marginTop: '1rem', padding: '0.5rem'}}>REVISAR</button>
+                <button className="btn-secondary" style={{width: '100%', marginTop: '1rem', padding: '0.5rem'}} onClick={() => navigate('/contest/analista')}>REVISAR</button>
                 <div className="request-meta">Enviado por: Boss_Nexus • Ontem</div>
               </div>
 
