@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams, Navigate } from 'react-router-dom';
+import { useNavigate, useParams, Navigate, useLocation } from 'react-router-dom';
 import {
   ListTodo, Palette, Upload, X, ChevronDown, Check, XCircle, RotateCcw, 
   Send, FileImage, Swords, MessageSquare, Award, Zap, Shield, Heart, Eye, 
@@ -322,7 +322,15 @@ function ArtistaContestView({ navigate }) {
         ]);
         setActiveContests(contests);
         if (subs) {
-          setRevisionSubmission(subs.find(s => s.status === 'REVISION'));
+          const latest = {};
+          subs.forEach(s => {
+            const cid = s.contest?.id;
+            if (cid && (!latest[cid] || s.id > latest[cid].id)) {
+              latest[cid] = s;
+            }
+          });
+          const needsRevision = Object.values(latest).find(s => s.status === 'REVISION');
+          setRevisionSubmission(needsRevision || null);
         }
       } catch(e) {}
     }
@@ -537,8 +545,9 @@ function ArtistaContestView({ navigate }) {
 // ─── ANALYST VIEW ────────────────────────────────────────────────────────────
 
 function AnalistaContestView({ navigate }) {
-  const [selectedContest, setSelectedContest] = useState(null);
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const location = useLocation();
+  const [selectedContest, setSelectedContest] = useState(location.state?.contestId || null);
+  const [selectedSubmission, setSelectedSubmission] = useState(location.state?.submissionId || null);
   const [grade, setGrade] = useState('');
   const [feedbackNote, setFeedbackNote] = useState('');
   const [actionMode, setActionMode] = useState(null); // 'decline' | 'revision' | null
@@ -645,9 +654,11 @@ function AnalistaContestView({ navigate }) {
               onChange={(e) => { setSelectedSubmission(parseInt(e.target.value) || null); setActionMode(null); }}
             >
               <option value="">-- Selecionar Submissão --</option>
-              {filteredSubmissions.map(s => (
-                <option key={s.id} value={s.id}>{s.artistName} — {s.pokemonName}</option>
-              ))}
+              {filteredSubmissions.map(s => {
+                const aName = s.artist?.username || 'Unknown';
+                const pName = s.contest?.pokemonRequest?.name || s.contest?.title || '';
+                return <option key={s.id} value={s.id}>{aName} — {pName}</option>;
+              })}
             </select>
           </div>
         )}
@@ -660,21 +671,21 @@ function AnalistaContestView({ navigate }) {
           <div className="contest-form-col">
             <div className="section-panel" style={{ padding: '1.5rem' }}>
               <div className="submission-artist-header">
-                <div className={`artist-avatar ${submission.avatarColor}`} style={{ width: 48, height: 48, fontSize: '1rem' }}>
-                  {submission.initials}
+                <div className={`artist-avatar ${submission.artist?.avatarColor || 'avatar-purple'}`} style={{ width: 48, height: 48, fontSize: '1rem' }}>
+                  {submission.artist?.initials || '??'}
                 </div>
                 <div>
-                  <div className="artist-name" style={{ fontSize: '1.1rem' }}>{submission.artistName}</div>
-                  <div className="artist-tier">{submission.artistTier}</div>
+                  <div className="artist-name" style={{ fontSize: '1.1rem' }}>{submission.artist?.username || 'Unknown'}</div>
+                  <div className="artist-tier">{submission.artist?.tier || ''}</div>
                 </div>
-                <span className={`status-badge ${submission.status === 'pending' ? 'orange' : submission.status === 'revision' ? 'blue' : 'green'}`}>
-                  {submission.status === 'pending' ? 'Pendente' : submission.status === 'revision' ? 'Em Revisão' : 'Aprovado'}
+                <span className={`status-badge ${submission.status === 'PENDING' ? 'orange' : submission.status === 'REVISION' ? 'blue' : 'green'}`}>
+                  {submission.status === 'PENDING' ? 'Pendente' : submission.status === 'REVISION' ? 'Em Revisão' : 'Aprovado'}
                 </span>
               </div>
 
               <div className="readonly-field">
                 <span className="readonly-label">Pokémon</span>
-                <span className="readonly-value">{submission.pokemonName}</span>
+                <span className="readonly-value">{submission.contest?.pokemonRequest?.name || submission.contest?.title}</span>
               </div>
               <div className="readonly-field">
                 <span className="readonly-label">Ataques</span>
@@ -687,9 +698,13 @@ function AnalistaContestView({ navigate }) {
 
               {/* Image Preview */}
               <div className="submission-image-preview">
-                <div className="thumbnail" style={{ width: '100%', height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', color: 'var(--text-gray)' }}>
-                  <FileImage size={32} style={{ opacity: 0.3 }} />
-                </div>
+                {submission.imageUrl ? (
+                  <img src={`http://localhost:8080${submission.imageUrl}`} alt="Artwork" style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--border-light)' }} />
+                ) : (
+                  <div className="thumbnail" style={{ width: '100%', height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', color: 'var(--text-gray)' }}>
+                    <FileImage size={32} style={{ opacity: 0.3 }} />
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -140,8 +140,16 @@ export default function AnalistaDashboard() {
                           </div>
                         </td>
                         <td style={{fontWeight: 500}}>{sub.pokemonName}</td>
-                        <td><div className="thumbnail"></div></td>
-                        <td><button className="btn-secondary" style={{padding: '0.4rem'}} onClick={() => navigate('/contest/analista')}>AVALIAR</button></td>
+                        <td>
+                          <div className="thumbnail" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {sub.imageUrl ? (
+                              <img src={`http://localhost:8080${sub.imageUrl}`} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <span style={{ fontSize: '10px' }}>Sem imagem</span>
+                            )}
+                          </div>
+                        </td>
+                        <td><button className="btn-secondary" style={{padding: '0.4rem'}} onClick={() => navigate('/contest/analista', { state: { contestId: sub.contestId, submissionId: sub.id } })}>AVALIAR</button></td>
                       </tr>
                     ))
                   )}

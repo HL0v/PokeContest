@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Search, ListTodo, Rocket, MoreHorizontal, Filter
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { apiService } from '../services/api';
 import Sidebar from './common/Sidebar';
 import TopNavbar from './common/TopNavbar';
@@ -30,11 +31,11 @@ export default function BossDashboard() {
   return (
     <div className="dashboard-layout">
       {/* Sidebar */}
-      <Sidebar role="boss" activeItem="requests" />
+      <Sidebar role="boss" activeItem="dashboard" />
 
       {/* Main Content */}
       <div className="main-content-wrapper">
-        <TopNavbar role="boss" showLinks={true} activeLink="requests" />
+        <TopNavbar role="boss" showLinks={true} activeLink="dashboard" />
 
         <main className="main-content">
           <div className="page-header">
@@ -99,7 +100,7 @@ export default function BossDashboard() {
                           <div className="progress-bar" style={{width: `${req.progress}%`, background: `var(--status-${req.color})`}}></div>
                         </div>
                       </td>
-                      <td><button className="icon-btn"><MoreHorizontal size={18} /></button></td>
+                      <td><button className="icon-btn" onClick={() => toast.info('Mais ações em breve!')}><MoreHorizontal size={18} /></button></td>
                     </tr>
                   ))
                 )}
