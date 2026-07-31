@@ -405,7 +405,7 @@ function ArtistaContestView({ navigate }) {
           onChange={(e) => setSelectedContest(parseInt(e.target.value) || null)}
         >
           <option value="">-- Escolha um concurso --</option>
-          {activeContests.filter(c => c.status === 'active').map(c => (
+          {activeContests.filter(c => c.status === 'ACTIVE').map(c => (
             <option key={c.id} value={c.id}>{c.title}</option>
           ))}
         </select>
