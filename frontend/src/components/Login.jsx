@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, Star, BarChart2, Palette, User, Lock, ArrowRight, Shield, Globe, Headphones } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { apiService } from '../services/api';
 
 export default function Login() {
@@ -14,12 +15,12 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      await apiService.login(username, password, role);
-      if (role === 'BOSS') navigate('/boss');
-      else if (role === 'ANALISTA') navigate('/analista');
-      else if (role === 'ARTISTA') navigate('/artista');
+      const user = await apiService.login(username, password, role);
+      if (user.role === 'BOSS') { toast.success('Bem-vindo, Boss!'); navigate('/boss'); }
+      else if (user.role === 'ANALISTA') { toast.success('Bem-vindo, Analista!'); navigate('/analista'); }
+      else if (user.role === 'ARTISTA') { toast.success('Bem-vindo, Artista!'); navigate('/artista'); }
     } catch (error) {
-      alert("Falha no login");
+      toast.error("Falha no login: credenciais inválidas.");
     } finally {
       setLoading(false);
     }

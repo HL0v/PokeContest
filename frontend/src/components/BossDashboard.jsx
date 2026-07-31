@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Bell, Settings, Search, LayoutDashboard, ListTodo, PenTool, Users, Plus, 
-  RefreshCw, Power, Rocket, MoreHorizontal, Filter, MessageCircle
+  Search, ListTodo, Rocket, MoreHorizontal, Filter
 } from 'lucide-react';
 import { apiService } from '../services/api';
+import Sidebar from './common/Sidebar';
+import TopNavbar from './common/TopNavbar';
 
 export default function BossDashboard() {
   const navigate = useNavigate();
@@ -14,7 +15,8 @@ export default function BossDashboard() {
   useEffect(() => {
     async function loadData() {
       try {
-        const result = await apiService.getBossDashboard();
+        const user = apiService.getCurrentUser();
+        const result = await apiService.getBossDashboard(user?.id);
         setData(result);
       } catch (error) {
         console.error("Erro ao carregar dashboard:", error);
@@ -28,72 +30,11 @@ export default function BossDashboard() {
   return (
     <div className="dashboard-layout">
       {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <TargetIcon />
-          </div>
-          <div className="sidebar-title-wrapper">
-            <span className="sidebar-title" style={{fontFamily: 'Outfit', fontWeight: 700}}>Contest HQ</span>
-            <span className="sidebar-subtitle">Advanced Exploration</span>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          <a href="#" className="nav-item">
-            <LayoutDashboard size={20} /> Dashboard
-          </a>
-          <a href="#" className="nav-item active">
-            <ListTodo size={20} /> Requests
-          </a>
-          <a href="#" className="nav-item">
-            <PenTool size={20} /> Submissions
-          </a>
-          <a href="#" className="nav-item">
-            <Users size={20} /> Management
-          </a>
-        </nav>
-
-        <div className="sidebar-bottom">
-          <button className="btn-new-request" onClick={() => navigate('/contest/boss')}>
-            <Plus size={18} /> Novo Pedido
-          </button>
-          
-          <div className="role-switcher">
-            <div className="role-switcher-left">
-              <StarIcon /> Boss
-            </div>
-            <RefreshCw size={14} />
-          </div>
-
-          <button className="logout-link" onClick={() => navigate('/')}>
-            <Power size={16} /> Logout
-          </button>
-        </div>
-      </aside>
+      <Sidebar role="boss" activeItem="requests" />
 
       {/* Main Content */}
       <div className="main-content-wrapper">
-        <header className="top-navbar">
-          <div className="navbar-left">
-            <div className="navbar-logo-text">Contest Nexus</div>
-            <div className="navbar-links">
-              <a href="#" className="nav-link">Dashboard</a>
-              <a href="#" className="nav-link active">Requests</a>
-            </div>
-          </div>
-
-          <div className="navbar-right">
-            <button className="icon-btn">
-              <Bell size={20} />
-              <span className="notification-dot"></span>
-            </button>
-            <button className="icon-btn">
-              <Settings size={20} />
-            </button>
-            <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="User" className="user-profile" />
-          </div>
-        </header>
+        <TopNavbar role="boss" showLinks={true} activeLink="requests" />
 
         <main className="main-content">
           <div className="page-header">
@@ -168,24 +109,5 @@ export default function BossDashboard() {
         </main>
       </div>
     </div>
-  );
-}
-
-// Simple internal components for icons if they are not in lucide-react or need specific styling
-function TargetIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"></circle>
-      <circle cx="12" cy="12" r="6"></circle>
-      <circle cx="12" cy="12" r="2"></circle>
-    </svg>
-  );
-}
-
-function StarIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-    </svg>
   );
 }

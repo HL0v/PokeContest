@@ -5,6 +5,7 @@ import com.pokecontest.model.enums.ContestStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "contests")
@@ -16,6 +17,7 @@ public class Contest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "boss_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User boss;
 
     @Column(nullable = false)
@@ -27,6 +29,9 @@ public class Contest {
 
     @Enumerated(EnumType.STRING)
     private ContestPriority priority;
+
+    @Column(name = "required_submissions", nullable = false)
+    private Integer requiredSubmissions = 1;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -53,6 +58,8 @@ public class Contest {
     public void setStatus(ContestStatus status) { this.status = status; }
     public ContestPriority getPriority() { return priority; }
     public void setPriority(ContestPriority priority) { this.priority = priority; }
+    public Integer getRequiredSubmissions() { return requiredSubmissions; }
+    public void setRequiredSubmissions(Integer requiredSubmissions) { this.requiredSubmissions = requiredSubmissions; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public PokemonRequest getPokemonRequest() { return pokemonRequest; }

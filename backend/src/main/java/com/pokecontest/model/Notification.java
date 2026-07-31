@@ -2,6 +2,7 @@ package com.pokecontest.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "notifications")
@@ -13,13 +14,14 @@ public class Notification {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String message;
 
     @Column(name = "is_read", nullable = false)
-    private Boolean isRead = false;
+    private boolean readStatus = false;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -31,8 +33,13 @@ public class Notification {
     public void setUser(User user) { this.user = user; }
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
-    public Boolean getIsRead() { return isRead; }
-    public void setIsRead(Boolean isRead) { this.isRead = isRead; }
+    public boolean isReadStatus() { return readStatus; }
+    public void setReadStatus(boolean readStatus) { this.readStatus = readStatus; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    @Transient
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
+    }
 }

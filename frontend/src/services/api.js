@@ -1,31 +1,24 @@
-// This file handles all backend communication.
-// Currently it returns mock data so the UI remains functional, 
-// but it is fully structured to be easily swapped with the real fetch calls (commented below).
+const getToken = () => localStorage.getItem('token');
 
-// MOCK DATA (to be removed once backend is ready)
-const MOCK_POKEMON_TYPES = [
-  { id: 1, name: 'Normal', color: '#A8A878', emoji: '⭐' },
-  { id: 2, name: 'Fogo', color: '#F08030', emoji: '🔥' },
-  { id: 3, name: 'Água', color: '#6890F0', emoji: '💧' },
-];
-const MOCK_CONTESTS = [
-  { id: 1, title: 'Campanha Ethereal', status: 'active', submissions: 5 },
-  { id: 2, title: 'Redesign Tier 3', status: 'active', submissions: 3 },
-];
-const MOCK_SUBMISSIONS = [
-  {
-    id: 1, contestId: 1, artistName: 'Arthur_V', artistTier: 'Pro Artist',
-    avatarColor: 'avatar-yellow', initials: 'AR', pokemonName: 'Lapras', 
-    attacks: 'Surf, Ice Beam', comments: 'Design focado em tons gelados.', status: 'pending'
+const authFetch = async (url, options = {}) => {
+  const token = getToken();
+  const headers = { ...options.headers };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
-];
-
-const delay = (ms) => new Promise(res => setTimeout(res, ms));
+  const res = await fetch(url, { ...options, headers });
+  if (res.status === 401 || res.status === 403) {
+    // Basic auto-logout on unauthorized
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  }
+  return res;
+};
 
 export const apiService = {
-  // --- AUTHENTICATION ---
+  // --- AUTH ---
   login: async (username, password, role) => {
-    /* REAL BACKEND LOGIC:
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -33,156 +26,231 @@ export const apiService = {
     });
     if (!res.ok) throw new Error('Falha na autenticação');
     const data = await res.json();
+    localStorage.setItem('currentUser', JSON.stringify(data.user));
     localStorage.setItem('token', data.token);
-    localStorage.setItem('userRole', data.role);
-    return data;
-    */
-
-    // MOCK DELAY
-    await delay(800);
-    localStorage.setItem('token', 'mock-jwt-token-123');
-    localStorage.setItem('userRole', role);
-    return { token: 'mock-jwt-token-123', role, username };
+    return data.user;
   },
-
+  
   logout: () => {
+    localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
   },
 
-  // --- BOSS ENDPOINTS ---
-  getBossDashboard: async () => {
-    /* REAL BACKEND LOGIC:
-    const res = await fetch('/api/boss/dashboard', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    return await res.json();
-    */
-    await delay(500);
+  getCurrentUser: () => {
+    const data = localStorage.getItem('currentUser');
+    return data ? JSON.parse(data) : null;
+  },
+
+  // --- BOSS ---
+  getBossDashboard: async (bossId) => {
+    // Frontend currently expects: { totalActivity, pendingRequests, activeRequests[] }
+    // Backend returns stats from GET /api/contests/boss/{bossId}/stats: { totalContests, activeContests, pendingSubmissions, completedContests }
+    // And contests from GET /api/contests
+    // We need to COMBINE them into the shape the UI expects
+    const [statsRes, contestsRes] = await Promise.all([
+      authFetch(`/api/contests/boss/${bossId}/stats`),
+      authFetch('/api/contests')
+    ]);
+    const stats = await statsRes.json();
+    const contests = await contestsRes.json();
+    
+    // Transform contests into activeRequests shape that BossDashboard expects:
+    // { id, name, types, habitat, desc, status, color, progress }
+    const activeRequests = contests
+      .filter(c => c.boss && c.boss.id === bossId)
+      .map(c => {
+        const pr = c.pokemonRequest;
+        const types = (c.pokemonTypes || []).map(t => t.name).join(' / ');
+        const statusMap = { ACTIVE: { label: 'Em Busca', color: 'blue' }, PENDING: { label: 'Aguardando', color: 'orange' }, COMPLETED: { label: 'Concluído', color: 'green' } };
+        const s = statusMap[c.status] || { label: c.status, color: 'blue' };
+        return {
+          id: c.id,
+          name: pr ? pr.name : c.title,
+          types,
+          habitat: pr ? pr.habitat : '',
+          desc: pr ? pr.history : '',
+          status: s.label,
+          color: s.color,
+          progress: c.status === 'COMPLETED' ? 100 : c.status === 'ACTIVE' ? 60 : 20
+        };
+      });
+    
     return {
-      totalActivity: 12,
-      pendingRequests: 4,
-      activeRequests: [
-        { id: 1, name: 'Lapras', types: 'Água / Gelo', habitat: 'Ilhas Seafoam', desc: 'Necessário para travessia', status: 'Em Busca', color: 'blue', progress: 60 }
-      ]
+      totalActivity: stats.totalContests || 0,
+      pendingRequests: stats.pendingSubmissions || 0,
+      activeRequests
     };
   },
 
   createContest: async (contestData) => {
-    /* REAL BACKEND LOGIC:
-    const res = await fetch('/api/contests', {
+    // contestData from BossContestView: { title, pokemonName, types (array of type objects), habitat, history, stats: {hp, attack, defense, spAtk, spDef, speed} }
+    // Backend expects: { title, bossId, priority, pokemonTypeIds, pokemonRequest: { name, habitat, history, baseHp, ... } }
+    const user = apiService.getCurrentUser();
+    const body = {
+      title: contestData.title,
+      bossId: user?.id,
+      priority: 'ROUTINE',
+      pokemonTypeIds: contestData.types.map(t => t.id),
+      pokemonRequest: {
+        name: contestData.pokemonName,
+        habitat: contestData.habitat,
+        history: contestData.history,
+        baseHp: contestData.stats.hp,
+        baseAttack: contestData.stats.attack,
+        baseDefense: contestData.stats.defense,
+        baseSpAtk: contestData.stats.spAtk,
+        baseSpDef: contestData.stats.spDef,
+        baseSpeed: contestData.stats.speed
+      }
+    };
+    const res = await authFetch('/api/contests', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` 
-      },
-      body: JSON.stringify(contestData)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
+    if (!res.ok) throw new Error('Erro ao criar concurso');
     return await res.json();
-    */
-    await delay(1000);
-    return { success: true, id: Math.floor(Math.random() * 1000) };
   },
 
   getPokemonTypes: async () => {
-    /* REAL BACKEND LOGIC:
-    const res = await fetch('/api/pokemon/types');
+    const res = await authFetch('/api/pokemon-types');
     return await res.json();
-    */
-    return MOCK_POKEMON_TYPES;
   },
 
-  // --- ARTIST ENDPOINTS ---
+  // --- ARTIST ---
   getActiveContests: async () => {
-    /* REAL BACKEND LOGIC:
-    const res = await fetch('/api/contests/active', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
+    const res = await authFetch('/api/contests/active');
     return await res.json();
-    */
-    await delay(500);
-    return MOCK_CONTESTS;
   },
 
   getContestDetails: async (id) => {
-    /* REAL BACKEND LOGIC:
-    const res = await fetch(`/api/contests/${id}`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    return await res.json();
-    */
-    await delay(300);
+    const res = await authFetch(`/api/contests/${id}`);
+    const contest = await res.json();
+    // Transform to the shape ArtistaContestView expects
+    const pr = contest.pokemonRequest || {};
     return {
-      name: 'Lapras', types: [MOCK_POKEMON_TYPES[2]], habitat: 'Ilhas Seafoam',
-      history: 'Necessário para travessia marítima longa. Prioridade alta.',
-      hp: 130, attack: 85, defense: 80, spAtk: 85, spDef: 95, speed: 60
+      name: pr.name,
+      types: contest.pokemonTypes || [],
+      habitat: pr.habitat,
+      history: pr.history,
+      hp: pr.baseHp, attack: pr.baseAttack, defense: pr.baseDefense,
+      spAtk: pr.baseSpAtk, spDef: pr.baseSpDef, speed: pr.baseSpeed
     };
   },
 
   submitArtwork: async (contestId, attacks, comments, file) => {
-    /* REAL BACKEND LOGIC:
+    const user = apiService.getCurrentUser();
     const formData = new FormData();
     formData.append('contestId', contestId);
+    formData.append('artistId', user?.id);
     formData.append('attacks', attacks);
     formData.append('comments', comments);
     formData.append('file', file);
-
-    const res = await fetch('/api/submissions', {
+    const res = await authFetch('/api/submissions', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-      body: formData // Note: Content-Type is set automatically by the browser for FormData
+      body: formData
     });
+    if (!res.ok) throw new Error('Erro ao enviar submissão');
     return await res.json();
-    */
-    await delay(1500);
-    return { success: true };
   },
 
-  // --- ANALYST ENDPOINTS ---
-  getAnalystDashboard: async () => {
-    /* REAL BACKEND LOGIC:
-    const res = await fetch('/api/analyst/dashboard', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
+  getSubmissionsByArtist: async (artistId) => {
+    const res = await authFetch(`/api/submissions/artist/${artistId}`);
     return await res.json();
-    */
-    await delay(500);
+  },
+
+  // --- ANALYST ---
+  getAnalystDashboard: async () => {
+    // Fetch analyst stats + pending submissions
+    const [statsRes, subsRes, contestsRes] = await Promise.all([
+      authFetch('/api/analyst/stats'),
+      authFetch('/api/submissions?status=PENDING'),  // We may need to fetch all and filter
+      authFetch('/api/contests')
+    ]);
+    
+    // If analyst/stats endpoint exists, use it; otherwise compute from raw data
+    let stats;
+    if (statsRes.ok) {
+      stats = await statsRes.json();
+    } else {
+      stats = { activeContests: 0, pendingFromBoss: 0, worksToValidate: 0, avgValidationTime: 'N/A' };
+    }
+    
+    const contests = await contestsRes.json();
+    
+    // Get pending submissions from all contests
+    const allSubmissions = [];
+    for (const contest of contests) {
+      try {
+        const subRes = await authFetch(`/api/submissions?contestId=${contest.id}`);
+        if (subRes.ok) {
+          const subs = await subRes.json();
+          allSubmissions.push(...subs.filter(s => s.status === 'PENDING' || s.status === 'REVISION'));
+        }
+      } catch (e) { /* skip */ }
+    }
+    
+    // Transform submissions to the shape AnalistaDashboard expects:
+    // { id, artistName, artistTier, avatarColor, initials, pokemonName, contestId, status }
+    const submissions = allSubmissions.map(s => ({
+      id: s.id,
+      contestId: s.contest?.id,
+      artistName: s.artist?.username || 'Unknown',
+      artistTier: s.artist?.tier || '',
+      avatarColor: s.artist?.avatarColor || 'avatar-purple',
+      initials: s.artist?.initials || '??',
+      pokemonName: s.contest?.pokemonRequest?.name || s.contest?.title || '',
+      imageUrl: s.imageUrl,
+      status: s.status
+    }));
+    
     return {
-      activeContests: 12,
-      pendingFromBoss: 5,
-      toValidate: 28,
-      avgValidationTime: '1.2h',
-      submissions: MOCK_SUBMISSIONS
+      activeContests: stats.activeContests || 0,
+      pendingFromBoss: stats.pendingFromBoss || 0,
+      toValidate: stats.worksToValidate || submissions.length,
+      avgValidationTime: stats.avgValidationTime || 'N/A',
+      submissions
     };
   },
 
-  reviewSubmission: async (submissionId, action, grade, feedbackNote) => {
-    /* REAL BACKEND LOGIC (action: 'accept', 'decline', 'revision')
-    const res = await fetch(`/api/submissions/${submissionId}/review`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` 
-      },
-      body: JSON.stringify({ action, grade, feedbackNote })
-    });
+  getSubmissionsByContest: async (contestId) => {
+    const res = await authFetch(`/api/submissions?contestId=${contestId}`);
     return await res.json();
-    */
-    await delay(800);
-    return { success: true };
+  },
+
+  reviewSubmission: async (submissionId, action, grade, feedbackNote) => {
+    // Map frontend action names to backend status enum
+    const statusMap = { accept: 'ACCEPTED', decline: 'DECLINED', revision: 'REVISION' };
+    const res = await authFetch(`/api/submissions/${submissionId}/review`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: statusMap[action] || action,
+        grade: grade ? parseFloat(grade) : null,
+        feedbackNote
+      })
+    });
+    if (!res.ok) throw new Error('Erro ao enviar revisão');
+    return await res.json();
   },
 
   // --- NOTIFICATIONS ---
-  getNotifications: async () => {
-    /* REAL BACKEND LOGIC:
-    const res = await fetch('/api/notifications', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
+  getNotifications: async (userId) => {
+    const res = await authFetch(`/api/notifications/user/${userId}`);
     return await res.json();
-    */
-    return [
-      { id: 1, text: 'Nova requisição do Boss', read: false },
-      { id: 2, text: 'Submissão enviada para revisão', read: false }
-    ];
+  },
+
+  getUnreadCount: async (userId) => {
+    const res = await authFetch(`/api/notifications/user/${userId}/unread-count`);
+    const data = await res.json();
+    return data.count || 0;
+  },
+
+  markAsRead: async (id) => {
+    await authFetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+  },
+
+  markAllAsRead: async (userId) => {
+    await authFetch(`/api/notifications/user/${userId}/read-all`, { method: 'PUT' });
   }
 };

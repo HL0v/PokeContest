@@ -3,6 +3,7 @@ package com.pokecontest.model;
 import com.pokecontest.model.enums.SubmissionStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "submissions")
@@ -14,10 +15,12 @@ public class Submission {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contest_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Contest contest;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "artist_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User artist;
 
     @Column(name = "image_url", nullable = false)

@@ -1,172 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import {
-  Bell, Settings, Search, LayoutDashboard, ListTodo, PenTool, Users, Plus,
-  RefreshCw, Power, Filter, MessageCircle, Star, BarChart2, Palette,
-  Upload, X, ChevronDown, Check, XCircle, RotateCcw, Send, FileImage,
-  Swords, MessageSquare, Award, Zap, Shield, Heart, Eye, ArrowLeft,
-  Sparkles, AlertTriangle
+  ListTodo, Palette, Upload, X, ChevronDown, Check, XCircle, RotateCcw, 
+  Send, FileImage, Swords, MessageSquare, Award, Zap, Shield, Heart, Eye, 
+  ArrowLeft, Sparkles, AlertTriangle, BarChart2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { apiService } from '../services/api';
+import Sidebar from './common/Sidebar';
+import TopNavbar from './common/TopNavbar';
 
-// ─── Mock Data ───────────────────────────────────────────────────────────────
 
-const POKEMON_TYPES = [
-  { id: 1, name: 'Normal', color: '#A8A878', emoji: '⭐' },
-  { id: 2, name: 'Fogo', color: '#F08030', emoji: '🔥' },
-  { id: 3, name: 'Água', color: '#6890F0', emoji: '💧' },
-  { id: 4, name: 'Grama', color: '#78C850', emoji: '🌿' },
-  { id: 5, name: 'Elétrico', color: '#F8D030', emoji: '⚡' },
-  { id: 6, name: 'Gelo', color: '#98D8D8', emoji: '❄️' },
-  { id: 7, name: 'Lutador', color: '#C03028', emoji: '🥊' },
-  { id: 8, name: 'Veneno', color: '#A040A0', emoji: '☠️' },
-  { id: 9, name: 'Terra', color: '#E0C068', emoji: '🌍' },
-  { id: 10, name: 'Voador', color: '#A890F0', emoji: '🦅' },
-  { id: 11, name: 'Psíquico', color: '#F85888', emoji: '🧠' },
-  { id: 12, name: 'Inseto', color: '#A8B820', emoji: '🐛' },
-  { id: 13, name: 'Pedra', color: '#B8A038', emoji: '🪨' },
-  { id: 14, name: 'Fantasma', color: '#705898', emoji: '👻' },
-  { id: 15, name: 'Dragão', color: '#7038F8', emoji: '🐉' },
-  { id: 16, name: 'Sombrio', color: '#705848', emoji: '🌑' },
-  { id: 17, name: 'Aço', color: '#B8B8D0', emoji: '⚙️' },
-  { id: 18, name: 'Fada', color: '#EE99AC', emoji: '🧚' },
-];
-
-const MOCK_CONTESTS = [
-  { id: 1, title: 'Campanha Ethereal', status: 'active', submissions: 5 },
-  { id: 2, title: 'Redesign Tier 3', status: 'active', submissions: 3 },
-  { id: 3, title: 'Game Asset Pack v2', status: 'pending', submissions: 8 },
-];
-
-const MOCK_BOSS_POKEMON = {
-  name: 'Lapras',
-  types: [POKEMON_TYPES[2], POKEMON_TYPES[5]],
-  habitat: 'Ilhas Seafoam',
-  history: 'Necessário para travessia marítima longa. Prioridade alta.',
-  hp: 130, attack: 85, defense: 80, spAtk: 85, spDef: 95, speed: 60,
-};
-
-const MOCK_SUBMISSIONS = [
-  {
-    id: 1, contestId: 1, artistName: 'Arthur_V', artistTier: 'Pro Artist',
-    avatarColor: 'avatar-yellow', initials: 'AR',
-    pokemonName: 'Lapras', attacks: 'Surf, Ice Beam, Thunderbolt, Protect',
-    comments: 'Design focado em tons gelados com aura mística.',
-    imageUrl: null, status: 'pending',
-  },
-  {
-    id: 2, contestId: 1, artistName: 'Elena_Sky', artistTier: 'Rising Star',
-    avatarColor: 'avatar-purple', initials: 'EL',
-    pokemonName: 'Arcanine', attacks: 'Flamethrower, Extreme Speed, Close Combat, Wild Charge',
-    comments: 'Estilo vibrante e dinâmico para cenas de ação.',
-    imageUrl: null, status: 'pending',
-  },
-  {
-    id: 3, contestId: 2, artistName: 'Max_Z', artistTier: 'Vanguard',
-    avatarColor: 'avatar-red', initials: 'MX',
-    pokemonName: 'Alakazam', attacks: 'Psychic, Shadow Ball, Focus Blast, Recover',
-    comments: 'Temática psicodélica com cores neon.',
-    imageUrl: null, status: 'revision',
-    revisionNote: 'Ajustar a paleta de cores para tons mais frios e adicionar efeitos de energia psíquica.',
-  },
-];
-
-// ─── Shared Internal Components ──────────────────────────────────────────────
-
-function TargetIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
-    </svg>
-  );
-}
-
-function RoleIcon({ role }) {
-  if (role === 'boss') return <Star size={14} fill="currentColor" />;
-  if (role === 'analista') return <BarChart2 size={14} />;
-  return <Palette size={14} />;
-}
-
-function roleName(role) {
-  if (role === 'boss') return 'Boss';
-  if (role === 'analista') return 'Analista';
-  return 'Artista';
-}
-
-function roleDashboard(role) {
-  if (role === 'boss') return '/boss';
-  if (role === 'analista') return '/analista';
-  return '/contest/artista';
-}
-
-function Sidebar({ role, navigate }) {
-  return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
-        <div className="sidebar-logo"><TargetIcon /></div>
-        <div className="sidebar-title-wrapper">
-          <span className="sidebar-title" style={{ fontFamily: 'Outfit', fontWeight: 700 }}>Contest HQ</span>
-          <span className="sidebar-subtitle">Advanced Exploration</span>
-        </div>
-      </div>
-
-      <nav className="sidebar-nav">
-        <a href="#" className="nav-item" onClick={(e) => { e.preventDefault(); navigate(roleDashboard(role)); }}>
-          <LayoutDashboard size={20} /> Dashboard
-        </a>
-        <a href="#" className="nav-item">
-          <ListTodo size={20} /> Requests
-        </a>
-        <a href="#" className="nav-item active">
-          <PenTool size={20} /> Concurso
-        </a>
-        <a href="#" className="nav-item">
-          <Users size={20} /> Management
-        </a>
-      </nav>
-
-      <div className="sidebar-bottom">
-        <div className="role-switcher">
-          <div className="role-switcher-left">
-            <RoleIcon role={role} /> {roleName(role)}
-          </div>
-          <RefreshCw size={14} />
-        </div>
-        <button className="logout-link" onClick={() => navigate('/')}>
-          <Power size={16} /> Sair
-        </button>
-      </div>
-    </aside>
-  );
-}
-
-function TopNavbar({ role }) {
-  return (
-    <header className="top-navbar">
-      <div className="navbar-left">
-        <div className="navbar-logo-text">Contest Nexus</div>
-        <div className="navbar-badge" style={
-          role === 'boss' ? { background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' } :
-          role === 'analista' ? { background: 'rgba(139, 92, 246, 0.1)', color: 'var(--status-purple)' } :
-          { background: 'rgba(16, 185, 129, 0.1)', color: 'var(--status-green)' }
-        }>
-          {roleName(role).toUpperCase()}
-        </div>
-      </div>
-
-      <div className="navbar-right">
-        <button className="icon-btn">
-          <Bell size={20} />
-          <span className="notification-dot"></span>
-        </button>
-        <button className="icon-btn">
-          <Settings size={20} />
-        </button>
-        <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="User" className="user-profile" />
-      </div>
-    </header>
-  );
-}
 
 // ─── BOSS VIEW ───────────────────────────────────────────────────────────────
 
@@ -180,6 +24,24 @@ function BossContestView({ navigate }) {
   const [stats, setStats] = useState({ hp: 50, attack: 50, defense: 50, spAtk: 50, spDef: 50, speed: 50 });
 
   const [submitting, setSubmitting] = useState(false);
+  const [pokemonTypes, setPokemonTypes] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const types = await apiService.getPokemonTypes();
+        setPokemonTypes(types);
+        
+        const user = apiService.getCurrentUser();
+        if (user) {
+          const dash = await apiService.getBossDashboard(user.id);
+          setMyRequests(dash.activeRequests.slice(0, 3));
+        }
+      } catch (e) {}
+    }
+    load();
+  }, []);
 
   const toggleType = (type) => {
     setSelectedTypes(prev =>
@@ -198,10 +60,10 @@ function BossContestView({ navigate }) {
     setSubmitting(true);
     try {
       await apiService.createContest({ title, pokemonName, types: selectedTypes, habitat, history, stats });
-      alert('Concurso criado com sucesso!');
+      toast.success('Concurso criado com sucesso!');
       navigate('/boss');
     } catch (error) {
-      alert('Erro ao criar concurso.');
+      toast.error('Erro ao criar concurso.');
     } finally {
       setSubmitting(false);
     }
@@ -271,7 +133,7 @@ function BossContestView({ navigate }) {
 
                   {typeDropdownOpen && (
                     <div className="type-dropdown">
-                      {POKEMON_TYPES.map(type => {
+                      {pokemonTypes.map(type => {
                         const isSelected = selectedTypes.find(t => t.id === type.id);
                         return (
                           <button
@@ -416,7 +278,7 @@ function BossContestView({ navigate }) {
                   <div key={i} className="mini-request-item">
                     <div className="mini-request-info">
                       <span className="mini-request-name">{p.name}</span>
-                      <span className="mini-request-type">{p.type}</span>
+                      <span className="mini-request-type">{p.types}</span>
                     </div>
                     <span className={`status-badge ${p.color}`}>{p.status}</span>
                   </div>
@@ -445,9 +307,35 @@ function ArtistaContestView({ navigate }) {
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
+  
+  const [activeContests, setActiveContests] = useState([]);
+  const [contestDetails, setContestDetails] = useState(null);
+  const [revisionSubmission, setRevisionSubmission] = useState(null);
 
-  // Check for a revision note (mock: submission id=3 is in revision)
-  const revisionSubmission = MOCK_SUBMISSIONS.find(s => s.status === 'revision');
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const user = apiService.getCurrentUser();
+        const [contests, subs] = await Promise.all([
+          apiService.getActiveContests(),
+          apiService.getSubmissionsByArtist(user?.id)
+        ]);
+        setActiveContests(contests);
+        if (subs) {
+          setRevisionSubmission(subs.find(s => s.status === 'REVISION'));
+        }
+      } catch(e) {}
+    }
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    if (selectedContest) {
+      apiService.getContestDetails(selectedContest).then(setContestDetails).catch(()=>setContestDetails(null));
+    } else {
+      setContestDetails(null);
+    }
+  }, [selectedContest]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -457,7 +345,7 @@ function ArtistaContestView({ navigate }) {
   const validateAndSetFile = (file) => {
     const validTypes = ['image/jpeg', 'image/jpg'];
     if (!validTypes.includes(file.type)) {
-      alert('Apenas arquivos .jpg ou .jpeg são aceitos.');
+      toast.error('Apenas arquivos .jpg ou .jpeg são aceitos.');
       return;
     }
     setSelectedFile(file);
@@ -473,20 +361,20 @@ function ArtistaContestView({ navigate }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedContest || !selectedFile) return alert('Selecione um concurso e uma imagem.');
+    if (!selectedContest || !selectedFile) return toast.error('Selecione um concurso e uma imagem.');
     setSubmitting(true);
     try {
       await apiService.submitArtwork(selectedContest, attacks, comments, selectedFile);
-      alert('Submissão enviada com sucesso!');
+      toast.success('Submissão enviada com sucesso!');
       navigate('/artista');
     } catch (error) {
-      alert('Erro ao enviar.');
+      toast.error('Erro ao enviar.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const contest = selectedContest ? MOCK_CONTESTS.find(c => c.id === selectedContest) : null;
+  const contest = selectedContest ? activeContests.find(c => c.id === selectedContest) : null;
 
   return (
     <>
@@ -517,13 +405,13 @@ function ArtistaContestView({ navigate }) {
           onChange={(e) => setSelectedContest(parseInt(e.target.value) || null)}
         >
           <option value="">-- Escolha um concurso --</option>
-          {MOCK_CONTESTS.filter(c => c.status === 'active').map(c => (
+          {activeContests.filter(c => c.status === 'active').map(c => (
             <option key={c.id} value={c.id}>{c.title}</option>
           ))}
         </select>
       </div>
 
-      {selectedContest && (
+      {selectedContest && contestDetails && (
         <form onSubmit={handleSubmit}>
           <div className="contest-grid">
             {/* Left – Boss Attributes (read-only) */}
@@ -533,12 +421,12 @@ function ArtistaContestView({ navigate }) {
 
                 <div className="readonly-field">
                   <span className="readonly-label">Nome</span>
-                  <span className="readonly-value">{MOCK_BOSS_POKEMON.name}</span>
+                  <span className="readonly-value">{contestDetails.name}</span>
                 </div>
                 <div className="readonly-field">
                   <span className="readonly-label">Tipo(s)</span>
                   <div className="readonly-value">
-                    {MOCK_BOSS_POKEMON.types.map(t => (
+                    {contestDetails.types.map(t => (
                       <span key={t.id} className="type-chip" style={{ background: t.color + '22', color: t.color, borderColor: t.color + '44' }}>
                         {t.emoji} {t.name}
                       </span>
@@ -547,21 +435,21 @@ function ArtistaContestView({ navigate }) {
                 </div>
                 <div className="readonly-field">
                   <span className="readonly-label">Habitat</span>
-                  <span className="readonly-value">{MOCK_BOSS_POKEMON.habitat}</span>
+                  <span className="readonly-value">{contestDetails.habitat}</span>
                 </div>
                 <div className="readonly-field">
                   <span className="readonly-label">História</span>
-                  <span className="readonly-value">{MOCK_BOSS_POKEMON.history}</span>
+                  <span className="readonly-value">{contestDetails.history}</span>
                 </div>
 
                 <div className="readonly-stats-row">
                   {[
-                    { label: 'HP', value: MOCK_BOSS_POKEMON.hp, color: '#EF4444' },
-                    { label: 'ATK', value: MOCK_BOSS_POKEMON.attack, color: '#F59E0B' },
-                    { label: 'DEF', value: MOCK_BOSS_POKEMON.defense, color: '#3B82F6' },
-                    { label: 'SP.A', value: MOCK_BOSS_POKEMON.spAtk, color: '#8B5CF6' },
-                    { label: 'SP.D', value: MOCK_BOSS_POKEMON.spDef, color: '#10B981' },
-                    { label: 'SPD', value: MOCK_BOSS_POKEMON.speed, color: '#EC4899' },
+                    { label: 'HP', value: contestDetails.hp, color: '#EF4444' },
+                    { label: 'ATK', value: contestDetails.attack, color: '#F59E0B' },
+                    { label: 'DEF', value: contestDetails.defense, color: '#3B82F6' },
+                    { label: 'SP.A', value: contestDetails.spAtk, color: '#8B5CF6' },
+                    { label: 'SP.D', value: contestDetails.spDef, color: '#10B981' },
+                    { label: 'SPD', value: contestDetails.speed, color: '#EC4899' },
                   ].map(s => (
                     <div key={s.label} className="readonly-stat-chip" style={{ borderColor: s.color + '44' }}>
                       <span style={{ color: s.color, fontWeight: 700 }}>{s.value}</span>
@@ -657,12 +545,40 @@ function AnalistaContestView({ navigate }) {
   const [actionSuccess, setActionSuccess] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const filteredSubmissions = MOCK_SUBMISSIONS.filter(s => s.contestId === selectedContest);
-  const submission = MOCK_SUBMISSIONS.find(s => s.id === selectedSubmission);
+  const [contests, setContests] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [stats, setStats] = useState({ activeContests: 0, pendingFromBoss: 0, toValidate: 0 });
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await apiService.getAnalystDashboard();
+        const active = await apiService.getActiveContests();
+        setContests(active);
+        setStats({
+          activeContests: res.activeContests,
+          pendingFromBoss: res.pendingFromBoss,
+          toValidate: res.toValidate
+        });
+      } catch(e) {}
+    }
+    load();
+  }, []);
+
+  useEffect(() => {
+    if (selectedContest) {
+      apiService.getSubmissionsByContest(selectedContest).then(setSubmissions).catch(()=>setSubmissions([]));
+    } else {
+      setSubmissions([]);
+    }
+  }, [selectedContest]);
+
+  const filteredSubmissions = submissions;
+  const submission = submissions.find(s => s.id === selectedSubmission);
 
   const handleAction = async (action) => {
-    if (action === 'decline' && !feedbackNote.trim()) { alert('A nota de feedback é obrigatória.'); return; }
-    if (action === 'revision' && !feedbackNote.trim()) { alert('A nota de revisão é obrigatória.'); return; }
+    if (action === 'decline' && !feedbackNote.trim()) { toast.error('A nota de feedback é obrigatória.'); return; }
+    if (action === 'revision' && !feedbackNote.trim()) { toast.error('A nota de revisão é obrigatória.'); return; }
     
     setSubmitting(true);
     try {
@@ -679,7 +595,7 @@ function AnalistaContestView({ navigate }) {
         setSelectedSubmission(null);
       }, 4000);
     } catch (error) {
-      alert('Erro ao enviar revisão.');
+      toast.error('Erro ao enviar revisão.');
     } finally {
       setSubmitting(false);
     }
@@ -714,7 +630,7 @@ function AnalistaContestView({ navigate }) {
             onChange={(e) => { setSelectedContest(parseInt(e.target.value) || null); setSelectedSubmission(null); setActionMode(null); }}
           >
             <option value="">-- Selecionar Concurso --</option>
-            {MOCK_CONTESTS.map(c => (
+            {activeContests.map(c => (
               <option key={c.id} value={c.id}>{c.title} ({c.submissions} submissões)</option>
             ))}
           </select>
@@ -853,15 +769,15 @@ function AnalistaContestView({ navigate }) {
               </h4>
               <div className="mini-stats-row">
                 <div className="mini-stat">
-                  <div className="mini-stat-value">12</div>
+                  <div className="mini-stat-value">{stats.activeContests}</div>
                   <div className="mini-stat-label">Concursos</div>
                 </div>
                 <div className="mini-stat">
-                  <div className="mini-stat-value" style={{ color: 'var(--status-orange)' }}>05</div>
+                  <div className="mini-stat-value" style={{ color: 'var(--status-orange)' }}>{stats.pendingFromBoss}</div>
                   <div className="mini-stat-label">Pendentes</div>
                 </div>
                 <div className="mini-stat">
-                  <div className="mini-stat-value" style={{ color: 'var(--status-green)' }}>28</div>
+                  <div className="mini-stat-value" style={{ color: 'var(--status-green)' }}>{stats.toValidate}</div>
                   <div className="mini-stat-label">Validadas</div>
                 </div>
               </div>
@@ -894,7 +810,7 @@ export default function ContestPage() {
 
   return (
     <div className="dashboard-layout">
-      <Sidebar role={role} navigate={navigate} />
+      <Sidebar role={role} activeItem={role === 'artista' ? 'criar_submissao' : 'concurso'} />
       <div className="main-content-wrapper">
         <TopNavbar role={role} />
         <main className="main-content">

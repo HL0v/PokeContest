@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Bell, Settings, Search, LayoutDashboard, ListTodo, PenTool, Users, Plus, 
-  RefreshCw, Power, Filter, MessageCircle, Megaphone, ArrowRight
+  PenTool, Plus, Filter, MessageCircle, Megaphone, ArrowRight
 } from 'lucide-react';
 import { apiService } from '../services/api';
+import Sidebar from './common/Sidebar';
+import TopNavbar from './common/TopNavbar';
 
 export default function AnalistaDashboard() {
   const navigate = useNavigate();
@@ -28,70 +29,11 @@ export default function AnalistaDashboard() {
   return (
     <div className="dashboard-layout">
       {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <TargetIcon />
-          </div>
-          <div className="sidebar-title-wrapper">
-            <span className="sidebar-title" style={{fontFamily: 'Outfit', fontWeight: 700}}>Contest HQ</span>
-            <span className="sidebar-subtitle">Advanced Exploration</span>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          <a href="#" className="nav-item active">
-            <LayoutDashboard size={20} /> Dashboard
-          </a>
-          <a href="#" className="nav-item">
-            <ListTodo size={20} /> Requests
-          </a>
-          <a href="#" className="nav-item">
-            <PenTool size={20} /> Submissions
-          </a>
-          <a href="#" className="nav-item">
-            <Users size={20} /> Management
-          </a>
-        </nav>
-
-        <div className="sidebar-bottom">
-          <div className="role-switcher">
-            <div className="role-switcher-left">
-              <BarChartIcon /> Analista
-            </div>
-            <RefreshCw size={14} />
-          </div>
-
-          <button className="logout-link" onClick={() => navigate('/')}>
-            <Power size={16} /> Sair
-          </button>
-        </div>
-      </aside>
+      <Sidebar role="analista" activeItem="dashboard" />
 
       {/* Main Content */}
       <div className="main-content-wrapper">
-        <header className="top-navbar">
-          <div className="navbar-left">
-            <div className="navbar-logo-text">Contest Nexus</div>
-            <div className="navbar-badge">ANALISTA</div>
-          </div>
-
-          <div className="navbar-search">
-            <Search className="search-icon" />
-            <input type="text" placeholder="Procurar requisições ou artistas..." />
-          </div>
-
-          <div className="navbar-right">
-            <button className="icon-btn">
-              <Bell size={20} />
-              <span className="notification-dot"></span>
-            </button>
-            <button className="icon-btn">
-              <Settings size={20} />
-            </button>
-            <img src="https://i.pravatar.cc/150?u=a042581f4e29026704f" alt="User" className="user-profile" />
-          </div>
-        </header>
+        <TopNavbar role="analista" showSearch={true} />
 
         <main className="main-content">
           <div className="page-header">
@@ -261,22 +203,3 @@ export default function AnalistaDashboard() {
   );
 }
 
-function TargetIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"></circle>
-      <circle cx="12" cy="12" r="6"></circle>
-      <circle cx="12" cy="12" r="2"></circle>
-    </svg>
-  );
-}
-
-function BarChartIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="20" x2="18" y2="10"></line>
-      <line x1="12" y1="20" x2="12" y2="4"></line>
-      <line x1="6" y1="20" x2="6" y2="14"></line>
-    </svg>
-  );
-}

@@ -1,6 +1,7 @@
 package com.pokecontest.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "pokemon_requests")
@@ -12,6 +13,7 @@ public class PokemonRequest {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contest_id", nullable = false)
+    @JsonIgnore
     private Contest contest;
 
     @Column(nullable = false)
