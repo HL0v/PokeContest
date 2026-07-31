@@ -39,6 +39,18 @@ npm run dev
 
 The dev server starts at `http://localhost:5173`.
 
+### Test Accounts (Seeded Data)
+
+The backend uses a local SQLite database (`backend/pokecontest.db`). Upon first launch, the `DataInitializerService` will automatically seed the database with Pokémon Types, sample contests, submissions, and the following user accounts for testing:
+
+| Role | Username | Password |
+|---|---|---|
+| **BOSS** | `boss_nexus` | `password` |
+| **ANALISTA** | `analyst_prime` | `password` |
+| **ARTISTA** | `arthur_v` | `password` |
+
+Simply go to the login screen on the frontend and use any of these credentials to test the different roles.
+
 ## Tech Stack
 
 | Layer      | Technology              |
