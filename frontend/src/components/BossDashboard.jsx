@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Bell, Settings, Search, LayoutDashboard, ListTodo, PenTool, Users, Plus, 
   RefreshCw, Power, Rocket, MoreHorizontal, Filter, MessageCircle
 } from 'lucide-react';
+import { apiService } from '../services/api';
 
 export default function BossDashboard() {
   const navigate = useNavigate();
+  const [data, setData] = useState({ totalActivity: 0, pendingRequests: 0, activeRequests: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const result = await apiService.getBossDashboard();
+        setData(result);
+      } catch (error) {
+        console.error("Erro ao carregar dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   return (
     <div className="dashboard-layout">
@@ -88,8 +105,8 @@ export default function BossDashboard() {
             <div className="stat-card-highlight">
               <Rocket className="bg-icon" />
               <div className="stat-label">ATIVIDADE TOTAL</div>
-              <div className="stat-value">12</div>
-              <div className="stat-sub">4 Pedidos Pendentes</div>
+              <div className="stat-value">{loading ? '...' : data.totalActivity}</div>
+              <div className="stat-sub">{loading ? 'Carregando...' : `${data.pendingRequests} Pedidos Pendentes`}</div>
             </div>
           </div>
 
@@ -117,66 +134,34 @@ export default function BossDashboard() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>
-                    <div className="pokemon-cell">
-                      <div className="pokemon-icon" style={{background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6'}}>💧</div>
-                      <div className="pokemon-info">
-                        <span className="pokemon-name">Lapras</span>
-                        <span className="pokemon-type">Água / Gelo</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Ilhas Seafoam</td>
-                  <td style={{color: 'var(--text-gray)', fontSize: '0.9rem'}}>Necessário para travessia marítima longa. Prioridade alta.</td>
-                  <td><span className="status-badge blue">Em Busca</span></td>
-                  <td>
-                    <div className="progress-container">
-                      <div className="progress-bar" style={{width: '60%', background: 'var(--status-blue)'}}></div>
-                    </div>
-                  </td>
-                  <td><button className="icon-btn"><MoreHorizontal size={18} /></button></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div className="pokemon-cell">
-                      <div className="pokemon-icon" style={{background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B'}}>🔥</div>
-                      <div className="pokemon-info">
-                        <span className="pokemon-name">Arcanine</span>
-                        <span className="pokemon-type">Fogo</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Cinnabar Island</td>
-                  <td style={{color: 'var(--text-gray)', fontSize: '0.9rem'}}>Forte para proteção e patrulha da base.</td>
-                  <td><span className="status-badge orange">Aguardando</span></td>
-                  <td>
-                    <div className="progress-container">
-                      <div className="progress-bar" style={{width: '20%', background: 'var(--status-orange)'}}></div>
-                    </div>
-                  </td>
-                  <td><button className="icon-btn"><MoreHorizontal size={18} /></button></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div className="pokemon-cell">
-                      <div className="pokemon-icon" style={{background: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6'}}>🧠</div>
-                      <div className="pokemon-info">
-                        <span className="pokemon-name">Alakazam</span>
-                        <span className="pokemon-type">Psíquico</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Caverna de Cerulean</td>
-                  <td style={{color: 'var(--text-gray)', fontSize: '0.9rem'}}>Comunicação telepática entre times.</td>
-                  <td><span className="status-badge green">Concluído</span></td>
-                  <td>
-                    <div className="progress-container">
-                      <div className="progress-bar" style={{width: '100%', background: 'var(--status-green)'}}></div>
-                    </div>
-                  </td>
-                  <td><button className="icon-btn"><MoreHorizontal size={18} /></button></td>
-                </tr>
+                {loading ? (
+                  <tr><td colSpan="6" style={{textAlign: 'center'}}>Carregando requisições...</td></tr>
+                ) : data.activeRequests.length === 0 ? (
+                  <tr><td colSpan="6" style={{textAlign: 'center'}}>Nenhuma requisição ativa.</td></tr>
+                ) : (
+                  data.activeRequests.map((req) => (
+                    <tr key={req.id}>
+                      <td>
+                        <div className="pokemon-cell">
+                          <div className="pokemon-icon" style={{background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6'}}>🐾</div>
+                          <div className="pokemon-info">
+                            <span className="pokemon-name">{req.name}</span>
+                            <span className="pokemon-type">{req.types}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{req.habitat}</td>
+                      <td style={{color: 'var(--text-gray)', fontSize: '0.9rem'}}>{req.desc}</td>
+                      <td><span className={`status-badge ${req.color}`}>{req.status}</span></td>
+                      <td>
+                        <div className="progress-container">
+                          <div className="progress-bar" style={{width: `${req.progress}%`, background: `var(--status-${req.color})`}}></div>
+                        </div>
+                      </td>
+                      <td><button className="icon-btn"><MoreHorizontal size={18} /></button></td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

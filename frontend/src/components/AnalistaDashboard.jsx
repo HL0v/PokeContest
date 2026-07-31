@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Bell, Settings, Search, LayoutDashboard, ListTodo, PenTool, Users, Plus, 
   RefreshCw, Power, Filter, MessageCircle, Megaphone, ArrowRight
 } from 'lucide-react';
+import { apiService } from '../services/api';
 
 export default function AnalistaDashboard() {
   const navigate = useNavigate();
+  const [data, setData] = useState({ activeContests: 0, pendingFromBoss: 0, toValidate: 0, avgValidationTime: '0h', submissions: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const result = await apiService.getAnalystDashboard();
+        setData(result);
+      } catch (error) {
+        console.error("Erro ao carregar dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   return (
     <div className="dashboard-layout">
@@ -96,23 +113,23 @@ export default function AnalistaDashboard() {
           <div className="stats-row">
             <div className="stat-card">
               <div className="stat-label">CONCURSOS ATIVOS</div>
-              <div className="stat-value">12</div>
+              <div className="stat-value">{loading ? '...' : data.activeContests}</div>
               <div className="stat-indicator indicator-green">+2</div>
             </div>
             <div className="stat-card">
               <div className="stat-label">PENDENTES DO BOSS</div>
-              <div className="stat-value">05</div>
+              <div className="stat-value">{loading ? '...' : data.pendingFromBoss}</div>
               <div className="stat-indicator indicator-red">URGENTE</div>
             </div>
             <div className="stat-card">
               <div className="stat-label">OBRAS PARA VALIDAR</div>
-              <div className="stat-value">28</div>
+              <div className="stat-value">{loading ? '...' : data.toValidate}</div>
               <div style={{fontSize: '0.8rem', color: 'var(--text-gray)', marginTop: '0.5rem'}}>84% Meta</div>
               <div className="progress-container"><div className="progress-bar" style={{width: '84%', background: 'var(--status-blue)'}}></div></div>
             </div>
             <div className="stat-card">
               <div className="stat-label">TEMPO MÉDIO VALIDAÇÃO</div>
-              <div className="stat-value">1.2h</div>
+              <div className="stat-value">{loading ? '...' : data.avgValidationTime}</div>
               <div className="progress-container"><div className="progress-bar" style={{width: '60%', background: 'var(--status-purple)'}}></div></div>
             </div>
           </div>
@@ -167,52 +184,32 @@ export default function AnalistaDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>
-                      <div className="artist-cell">
-                        <div className="artist-avatar avatar-yellow">AR</div>
-                        <div className="artist-info">
-                          <span className="artist-name">Arthur_V</span>
-                          <span className="artist-tier">Pro Artist</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{fontWeight: 500}}>Cyberpunk Neon City</td>
-                    <td><div className="thumbnail"></div></td>
-                    <td><input type="text" className="rating-input" placeholder="Nota" /></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="artist-cell">
-                        <div className="artist-avatar avatar-purple">EL</div>
-                        <div className="artist-info">
-                          <span className="artist-name">Elena_Sky</span>
-                          <span className="artist-tier">Rising Star</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{fontWeight: 500}}>Minimal Nature Icons</td>
-                    <td><div className="thumbnail"></div></td>
-                    <td><input type="text" className="rating-input" placeholder="Nota" /></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="artist-cell">
-                        <div className="artist-avatar avatar-red">MX</div>
-                        <div className="artist-info">
-                          <span className="artist-name">Max_Z</span>
-                          <span className="artist-tier">Vanguard</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{fontWeight: 500}}>3D Abstract Tech</td>
-                    <td><div className="thumbnail"></div></td>
-                    <td><input type="text" className="rating-input" placeholder="Nota" /></td>
-                  </tr>
+                  {loading ? (
+                    <tr><td colSpan="4" style={{textAlign: 'center'}}>Carregando submissões...</td></tr>
+                  ) : data.submissions.length === 0 ? (
+                    <tr><td colSpan="4" style={{textAlign: 'center'}}>Nenhuma submissão aguardando revisão.</td></tr>
+                  ) : (
+                    data.submissions.map((sub) => (
+                      <tr key={sub.id}>
+                        <td>
+                          <div className="artist-cell">
+                            <div className={`artist-avatar ${sub.avatarColor || 'avatar-purple'}`}>{sub.initials}</div>
+                            <div className="artist-info">
+                              <span className="artist-name">{sub.artistName}</span>
+                              <span className="artist-tier">{sub.artistTier}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{fontWeight: 500}}>{sub.pokemonName}</td>
+                        <td><div className="thumbnail"></div></td>
+                        <td><button className="btn-secondary" style={{padding: '0.4rem'}} onClick={() => navigate('/contest/analista')}>AVALIAR</button></td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
               <div style={{padding: '1rem 1.5rem', borderTop: '1px solid var(--border-light)', textAlign: 'right'}}>
-                <a href="#" style={{fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem'}}>Ver todas as 28 submissões <ArrowRight size={14} /></a>
+                <a href="#" style={{fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem'}}>Ver todas as {data.toValidate} submissões <ArrowRight size={14} /></a>
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import {
   Bell, Settings, Search, LayoutDashboard, ListTodo, PenTool, Users, Plus,
@@ -7,6 +7,7 @@ import {
   Swords, MessageSquare, Award, Zap, Shield, Heart, Eye, ArrowLeft,
   Sparkles, AlertTriangle
 } from 'lucide-react';
+import { apiService } from '../services/api';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 
@@ -178,6 +179,8 @@ function BossContestView({ navigate }) {
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [stats, setStats] = useState({ hp: 50, attack: 50, defense: 50, spAtk: 50, spDef: 50, speed: 50 });
 
+  const [submitting, setSubmitting] = useState(false);
+
   const toggleType = (type) => {
     setSelectedTypes(prev =>
       prev.find(t => t.id === type.id)
@@ -190,10 +193,18 @@ function BossContestView({ navigate }) {
     setStats(prev => ({ ...prev, [stat]: Math.max(1, Math.min(255, parseInt(value) || 0)) }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: POST to /api/contests
-    alert('Concurso criado com sucesso! (mock)');
+    setSubmitting(true);
+    try {
+      await apiService.createContest({ title, pokemonName, types: selectedTypes, habitat, history, stats });
+      alert('Concurso criado com sucesso!');
+      navigate('/boss');
+    } catch (error) {
+      alert('Erro ao criar concurso.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const primaryColor = selectedTypes.length > 0 ? selectedTypes[0].color : '#A8A878';
@@ -413,8 +424,8 @@ function BossContestView({ navigate }) {
               </div>
             </div>
 
-            <button type="submit" className="btn-primary contest-submit-btn">
-              <Sparkles size={18} /> PUBLICAR CONCURSO
+            <button type="submit" className="btn-primary contest-submit-btn" disabled={submitting}>
+              <Sparkles size={18} /> {submitting ? 'PUBLICANDO...' : 'PUBLICAR CONCURSO'}
             </button>
           </div>
         </div>
@@ -432,6 +443,7 @@ function ArtistaContestView({ navigate }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
 
   // Check for a revision note (mock: submission id=3 is in revision)
@@ -459,10 +471,19 @@ function ArtistaContestView({ navigate }) {
     if (file) validateAndSetFile(file);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: POST to /api/submissions
-    alert('Submissão enviada com sucesso! (mock)');
+    if (!selectedContest || !selectedFile) return alert('Selecione um concurso e uma imagem.');
+    setSubmitting(true);
+    try {
+      await apiService.submitArtwork(selectedContest, attacks, comments, selectedFile);
+      alert('Submissão enviada com sucesso!');
+      navigate('/artista');
+    } catch (error) {
+      alert('Erro ao enviar.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const contest = selectedContest ? MOCK_CONTESTS.find(c => c.id === selectedContest) : null;
@@ -614,8 +635,8 @@ function ArtistaContestView({ navigate }) {
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary contest-submit-btn">
-                <Send size={18} /> ENVIAR SUBMISSÃO
+              <button type="submit" className="btn-primary contest-submit-btn" disabled={submitting}>
+                <Send size={18} /> {submitting ? 'ENVIANDO...' : 'ENVIAR SUBMISSÃO'}
               </button>
             </div>
           </div>
@@ -634,21 +655,34 @@ function AnalistaContestView({ navigate }) {
   const [feedbackNote, setFeedbackNote] = useState('');
   const [actionMode, setActionMode] = useState(null); // 'decline' | 'revision' | null
   const [actionSuccess, setActionSuccess] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const filteredSubmissions = MOCK_SUBMISSIONS.filter(s => s.contestId === selectedContest);
   const submission = MOCK_SUBMISSIONS.find(s => s.id === selectedSubmission);
 
-  const handleAction = (action) => {
-    if (action === 'accept') {
-      setActionSuccess(`Submissão de ${submission.artistName} foi ACEITA com nota ${grade || 'N/A'}.`);
-    } else if (action === 'decline') {
-      if (!feedbackNote.trim()) { alert('A nota de feedback é obrigatória para recusar.'); return; }
-      setActionSuccess(`Submissão de ${submission.artistName} foi RECUSADA. Feedback enviado.`);
-    } else if (action === 'revision') {
-      if (!feedbackNote.trim()) { alert('A nota de revisão é obrigatória.'); return; }
-      setActionSuccess(`Submissão de ${submission.artistName} foi enviada para REVISÃO. Feedback enviado.`);
+  const handleAction = async (action) => {
+    if (action === 'decline' && !feedbackNote.trim()) { alert('A nota de feedback é obrigatória.'); return; }
+    if (action === 'revision' && !feedbackNote.trim()) { alert('A nota de revisão é obrigatória.'); return; }
+    
+    setSubmitting(true);
+    try {
+      await apiService.reviewSubmission(submission.id, action, grade, feedbackNote);
+      if (action === 'accept') {
+        setActionSuccess(`Submissão de ${submission.artistName} foi ACEITA.`);
+      } else if (action === 'decline') {
+        setActionSuccess(`Submissão de ${submission.artistName} foi RECUSADA.`);
+      } else if (action === 'revision') {
+        setActionSuccess(`Submissão de ${submission.artistName} foi enviada para REVISÃO.`);
+      }
+      setTimeout(() => {
+        setActionSuccess(null);
+        setSelectedSubmission(null);
+      }, 4000);
+    } catch (error) {
+      alert('Erro ao enviar revisão.');
+    } finally {
+      setSubmitting(false);
     }
-    setTimeout(() => setActionSuccess(null), 4000);
   };
 
   return (

@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, Star, BarChart2, Palette, User, Lock, ArrowRight, Shield, Globe, Headphones } from 'lucide-react';
+import { apiService } from '../services/api';
 
 export default function Login() {
   const [role, setRole] = useState('BOSS');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (role === 'BOSS') {
-      navigate('/boss');
-    } else if (role === 'ANALISTA') {
-      navigate('/analista');
-    } else if (role === 'ARTISTA') {
-      navigate('/contest/artista');
+    setLoading(true);
+    try {
+      await apiService.login(username, password, role);
+      if (role === 'BOSS') navigate('/boss');
+      else if (role === 'ANALISTA') navigate('/analista');
+      else if (role === 'ARTISTA') navigate('/artista');
+    } catch (error) {
+      alert("Falha no login");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,7 +68,7 @@ export default function Login() {
             </div>
             <div className="input-wrapper">
               <User size={18} className="input-icon" />
-              <input type="text" className="input-field" placeholder="Nome de usuário ou ID" />
+              <input type="text" className="input-field" placeholder="Nome de usuário ou ID" value={username} onChange={e => setUsername(e.target.value)} required />
             </div>
           </div>
 
@@ -71,7 +79,7 @@ export default function Login() {
             </div>
             <div className="input-wrapper">
               <Lock size={18} className="input-icon" />
-              <input type="password" className="input-field" placeholder="••••••••" defaultValue="password" />
+              <input type="password" className="input-field" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
           </div>
 
@@ -79,8 +87,8 @@ export default function Login() {
             <input type="checkbox" /> Lembrar neste dispositivo
           </label>
 
-          <button type="submit" className="btn-primary">
-            AUTENTICAR NO SISTEMA <ArrowRight size={18} />
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'AUTENTICANDO...' : <>AUTENTICAR NO SISTEMA <ArrowRight size={18} /></>}
           </button>
 
           <div className="login-footer-links">
