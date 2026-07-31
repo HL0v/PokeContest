@@ -70,7 +70,7 @@ export default function Sidebar({ role, activeItem }) {
             <a href="#" className={`nav-item ${activeItem === 'concurso' || activeItem === 'submissions' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate(`/contest/${role}`); }}>
               <PenTool size={20} /> {role === 'boss' ? 'Novo Concurso' : 'Submissões'}
             </a>
-            <a href="#" className={`nav-item ${activeItem === 'management' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); import('react-hot-toast').then(m => m.default.info('Em breve!')); }}>
+            <a href="#" className={`nav-item ${activeItem === 'management' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); role === 'boss' ? navigate('/boss/management') : import('react-hot-toast').then(m => m.default.info('Em breve!')); }}>
               <Users size={20} /> Management
             </a>
           </>

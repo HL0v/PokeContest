@@ -117,6 +117,23 @@ export const apiService = {
     return await res.json();
   },
 
+  // --- USERS MANAGEMENT (BOSS) ---
+  getUsers: async () => {
+    const res = await authFetch('/api/users');
+    if (!res.ok) throw new Error('Erro ao buscar usuários');
+    return await res.json();
+  },
+
+  createUser: async (userData) => {
+    const res = await authFetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    if (!res.ok) throw new Error('Erro ao criar usuário');
+    return await res.json();
+  },
+
   // --- ARTIST ---
   getActiveContests: async () => {
     const res = await authFetch('/api/contests/active');
